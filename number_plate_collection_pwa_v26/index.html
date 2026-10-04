@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f7fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ナンバープレートコレクション">
+<title>ナンバープレートコレクション</title>
+<style>
+:root{
+  --bg:#f5f7fb; --card:#ffffff; --text:#111827; --sub:#6b7280;
+  --line:#e5e7eb; --blue:#1677ff; --blue2:#edf5ff; --green:#16a34a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Hiragino Sans",
+  "Yu Gothic",Meiryo,sans-serif;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh}
+.app{max-width:700px;margin:0 auto;min-height:100vh;padding-bottom:24px}
+header{position:sticky;top:0;z-index:20;background:rgba(245,247,251,.94);
+  backdrop-filter:blur(18px);padding:18px 16px 12px;border-bottom:1px solid rgba(229,231,235,.75)}
+.header-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-actions{display:flex;align-items:center;gap:3px}
+.title{font-size:24px;font-weight:800;letter-spacing:-.03em}
+.icon-btn{border:0;background:transparent;font-size:22px;width:40px;height:40px;border-radius:12px}
+.icon-btn:active{background:#e9edf3}
+.search-row{display:none;margin-top:10px}
+.search-row.open{display:block}
+.search-input{width:100%;height:44px;border:1px solid var(--line);border-radius:14px;
+  background:#fff;padding:0 14px;font-size:16px;outline:none}
+.segment{margin-top:14px;background:#e9eef5;padding:3px;border-radius:14px;display:grid;grid-template-columns:repeat(3,1fr)}
+.segment button{border:0;background:transparent;border-radius:11px;padding:9px 4px;font-size:13px;font-weight:700;color:#475569}
+.segment button.active{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(22,119,255,.22)}
+.summary{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.count{font-size:14px;color:#374151;font-weight:700}
+.progress{height:7px;background:#dde6f2;border-radius:99px;overflow:hidden;flex:1;margin:0 12px}
+.progress > div{height:100%;background:var(--blue);border-radius:99px;width:0%}
+.sort{border:0;background:transparent;color:#334155;font-weight:700;font-size:13px;padding:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.card{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:10px;
+  box-shadow:0 2px 10px rgba(15,23,42,.045);cursor:pointer;transition:transform .08s ease}
+.card:active{transform:scale(.985)}
+.region{font-weight:800;font-size:14px;margin:2px 0 7px}
+.plate{
+  position:relative;
+  width:100%;
+  aspect-ratio:2 / 1;
+  min-height:0;
+  background:linear-gradient(180deg,#fcfcfc,#edf0f1);
+  border:2px solid #c7cdd1;
+  border-radius:8px;
+  padding:7% 6% 6%;
+  box-shadow:inset 0 0 0 1px #fff, 0 2px 5px rgba(0,0,0,.10);
+  overflow:hidden;
+}
+.plate:before,.plate:after{content:"";position:absolute;top:7px;width:5px;height:5px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#f7f8f8 0 18%,#aeb5ba 42%,#868e93 100%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.9),0 1px 1px rgba(0,0,0,.18)}
+.plate:before{left:7px}.plate:after{right:7px}
+.plate-top{
+  width:100%;
+  font-family:"Helvetica Neue","Hiragino Kaku Gothic ProN","Yu Gothic",Arial,sans-serif;
+  font-size:clamp(16px,4.0vw,22px);
+  text-align:center;
+  margin-left:0;
+  color:#243038;
+  font-weight:800;
+  line-height:1;
+  letter-spacing:-.03em;
+  transform:scaleX(.90);
+  transform-origin:center;
+}
+.bottom-line{
+  position:relative;
+  width:100%;
+  min-height:2.0em;
+  margin-top:2.8%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.kana{
+  position:absolute;
+  left:-2%;
+  top:50%;
+  transform:translateY(-50%) scaleX(.84);
+  transform-origin:center;
+  width:11%;
+  text-align:center;
+  font-family:"Helvetica Neue","Hiragino Kaku Gothic ProN","Yu Gothic",Arial,sans-serif;
+  font-size:clamp(13px,3vw,18px);
+  line-height:1;
+  font-weight:800;
+  color:#0b3c2c;
+}
+.num{
+  width:100%;
+  margin:0 auto;
+  font-family:"Helvetica Neue","Arial Narrow",Arial,sans-serif;
+  width:74%;
+  margin:0 12% 0 10%;
+  font-size:clamp(36px,8.6vw,58px);
+  line-height:.88;
+  font-weight:800;
+  letter-spacing:.01em;
+  word-spacing:.075em;
+  text-align:center;
+  color:#0b3c2c;
+  white-space:nowrap;
+  transform:scaleX(.86);
+  transform-origin:center;
+}
+.status{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:12px}
+.dot{width:15px;height:15px;border-radius:50%;border:2px solid #aab3be;display:inline-flex;align-items:center;justify-content:center}
+.collected .dot{background:var(--green);border-color:var(--green);color:#fff;font-size:10px;font-weight:900}
+.collected .status{color:var(--green);font-weight:800}
+.uncollected .status{color:#64748b}
+.muted{color:var(--sub);font-size:12px}
+.empty{padding:54px 22px;text-align:center;color:#6b7280}
+.empty strong{display:block;color:#111827;font-size:18px;margin-bottom:7px}
+footer{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:9px 18px calc(9px + env(safe-area-inset-bottom))}
+.footer-inner{max-width:700px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);text-align:center}
+.footer-item{font-size:11px;color:#94a3b8;font-weight:700}
+.footer-item.active{color:var(--blue)}.footer-icon{font-size:21px;line-height:1.1;margin-bottom:2px}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;align-items:flex-end;z-index:50}
+.overlay.show{display:flex}
+.sheet{width:100%;max-width:700px;margin:0 auto;background:#fff;border-radius:22px 22px 0 0;
+  padding:18px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 35px rgba(0,0,0,.18)}
+.handle{width:42px;height:5px;background:#d3d8df;border-radius:99px;margin:0 auto 16px}
+.large-plate{
+  margin:3px auto 16px;
+  width:min(92vw, 370px);
+}
+.large-plate .plate-top{
+  font-size:clamp(19px,5.1vw,26px);
+  margin-left:0;
+  font-weight:800;
+}
+.large-plate .bottom-line{
+  min-height:2.0em;
+  margin-top:4%;
+}
+.large-plate .kana{
+  left:-2%;
+  width:11%;
+  font-size:clamp(18px,4vw,25px);
+}
+.large-plate .num{
+  width:74%;
+  margin:0 12% 0 10%;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  align-items:center;
+  justify-items:center;
+  font-size:clamp(58px,21vw,94px);
+  padding:1% 0 3%;
+  text-align:center;
+  transform:scaleX(.88);
+  transform-origin:center;
+}
+.large-plate .num-char{
+  width:100%;
+  text-align:center;
+}
+.sheet h2{font-size:26px;margin:3px 0 5px}.sheet .state{font-size:13px;color:#64748b;margin-bottom:16px}
+.primary,.secondary{width:100%;height:48px;border-radius:14px;border:0;font-size:16px;font-weight:800}
+.primary{background:var(--blue);color:#fff}.secondary{background:#eef2f7;color:#334155;margin-top:9px}
+.note{font-size:11px;color:#94a3b8;text-align:center;margin-top:12px;line-height:1.5}
+@media(min-width:520px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+.data-sheet .sheet{max-height:88vh;overflow:auto}
+.date-row{margin:10px 0 14px}
+.date-label{display:block;font-size:13px;font-weight:800;color:#475569;margin-bottom:7px}
+.date-input{width:100%;height:44px;border:1px solid #dbe1e8;border-radius:12px;background:#fff;padding:0 12px;font-size:16px}
+.date-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
+.small-link{border:0;background:transparent;color:#1677ff;font-size:13px;font-weight:800;padding:7px}
+.detail-date{font-size:12px;color:#64748b;margin-top:6px}
+.date-saved-message{
+  min-height:18px;
+  margin-top:7px;
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+  color:#16a34a;
+}
+.more-actions{display:grid;gap:10px}
+.more-action{height:48px;border:1px solid #dde3ea;background:#fff;border-radius:14px;font-size:15px;font-weight:800;color:#263444}
+.more-action.primary-outline{border-color:#1677ff;color:#1677ff}
+.import-note{font-size:12px;line-height:1.55;color:#64748b;background:#f5f8fc;border-radius:12px;padding:11px;margin:10px 0 14px}
+#importInput{display:none}
+
+
+.region-group-header{
+  grid-column:1/-1;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 4px 3px;
+  margin-top:2px;
+  color:#172033;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.02em;
+}
+.region-group-header:first-child{margin-top:0}
+.region-group-count{
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:0;
+}
+.region-line{display:flex;align-items:baseline;gap:6px;min-height:20px}
+.gotouchi{
+  color:#7c5c00;
+  font-size:10px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+
+.settings-overlay .sheet{max-height:90vh;overflow:auto;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+.settings-section{background:#f7f9fc;border-radius:16px;padding:14px;margin:12px 0}
+.settings-section-title{font-size:13px;font-weight:900;color:#64748b;margin:0 0 9px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0}
+.settings-row + .settings-row{border-top:1px solid #e5e7eb}
+.settings-row-label{font-size:15px;font-weight:800}
+.settings-row-sub{margin-top:3px;font-size:12px;color:#64748b;line-height:1.4}
+.theme-segment{background:#e8edf4;padding:3px;border-radius:12px;display:grid;grid-template-columns:1fr 1fr;min-width:190px}
+.theme-segment button{border:0;background:transparent;border-radius:9px;padding:8px 10px;color:#475569;font-size:12px;font-weight:800}
+.theme-segment button.active{background:#fff;color:#1677ff;box-shadow:0 1px 5px rgba(15,23,42,.10)}
+.settings-note{font-size:11px;color:#94a3b8;line-height:1.55;text-align:center;margin-top:10px}
+body.dark-mode{--bg:#111827;--card:#1f2937;--text:#f8fafc;--sub:#94a3b8;--line:#374151;--blue2:#1e3a5f;--green:#22c55e}
+body.dark-mode header{background:rgba(17,24,39,.94);border-bottom-color:rgba(55,65,81,.85)}
+body.dark-mode footer{background:rgba(17,24,39,.94);border-top-color:#374151}
+body.dark-mode .segment,body.dark-mode .theme-segment{background:#1f2937}
+body.dark-mode .segment button{color:#cbd5e1}
+body.dark-mode .search-input,body.dark-mode .card,body.dark-mode .sheet,body.dark-mode .date-input,body.dark-mode .more-action{background:#1f2937;color:#f8fafc;border-color:#374151}
+body.dark-mode .sort,body.dark-mode .count,body.dark-mode .region,body.dark-mode .region-group-header,body.dark-mode .sheet h2,body.dark-mode .settings-row-label{color:#f8fafc}
+body.dark-mode .region-group-count,body.dark-mode .settings-row-sub,body.dark-mode .date-label,body.dark-mode .state,body.dark-mode .detail-date,body.dark-mode .muted{color:#94a3b8}
+body.dark-mode .settings-section{background:#172033}
+body.dark-mode .settings-section-title{color:#94a3b8}
+body.dark-mode .settings-row + .settings-row{border-top-color:#374151}
+body.dark-mode .theme-segment button.active{background:#374151;color:#60a5fa}
+body.dark-mode .plate{background:linear-gradient(180deg,#f5f7f8,#dfe4e7);border-color:#6b7280}
+
+</style>
+
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
+<meta name="theme-color" content="#f5f7fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ナンバープレートコレクション">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="header-row">
+    <div class="title">ナンバープレートコレクション</div>
+    <div class="header-actions">
+      <button type="button" class="icon-btn" id="searchBtn" aria-label="検索">⌕</button>
+      <button type="button" class="icon-btn" id="settingsBtn" aria-label="設定">⚙</button>
+    </div>
+  </div>
+  <div class="search-row" id="searchRow">
+    <input id="searchInput" class="search-input" placeholder="地域名を検索" autocomplete="off">
+  </div>
+  <div class="segment" role="tablist">
+    <button class="active" data-filter="all">すべて</button>
+    <button data-filter="uncollected">未分類</button>
+    <button data-filter="collected">収集済み</button>
+  </div>
+  <div class="summary">
+    <div class="count" id="count">0 / 138</div>
+    <div class="progress"><div id="progressBar"></div></div>
+    <button class="sort" id="sortBtn">地域順 ↕</button>
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+</div>
+
+
+
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet">
+    <div class="handle"></div>
+    <div class="large-plate" id="largePlate"></div>
+    <h2 id="sheetTitle"></h2>
+    <div class="state" id="sheetState"></div>
+    <div class="date-row" id="dateRow">
+      <label class="date-label" for="collectionDate">収集日</label>
+      <input id="collectionDate" class="date-input" type="date">
+      <div class="date-actions">
+        <button class="small-link" id="clearDateBtn">日付を未設定にする</button>
+        <button class="small-link" id="todayDateBtn">今日にする</button>
+      </div>
+    </div>
+    <button type="button" class="primary" id="saveDateBtn">収集日を保存</button>
+    <div id="dateSavedMessage" class="date-saved-message" aria-live="polite"></div>
+    <button type="button" class="primary" id="collectBtn"></button>
+    <button type="button" class="secondary" id="closeBtn">閉じる</button>
+    <div class="note">このアプリでは「地域名」だけをコレクションします。<br>分類番号・ひらがな・4桁以下の指定番号はコレクション対象ではありません。</div>
+  </div>
+</div>
+
+<div class="overlay settings-overlay" id="moreOverlay">
+  <div class="sheet">
+    <div class="handle"></div>
+    <h2>設定</h2>
+    <div class="settings-section">
+      <div class="settings-section-title">背景テーマ</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">背景テーマ</div>
+          <div class="settings-row-sub">アプリ全体の背景と画面配色を変更します。</div>
+        </div>
+        <div class="theme-segment" id="themeSegment">
+          <button type="button" data-theme="light">ライト</button>
+          <button type="button" data-theme="dark">ダーク</button>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">このアプリについて</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">コレクション対象</div>
+          <div class="settings-row-sub">全国の地域名を収集します。指定番号などはコレクション対象外です。</div>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="secondary" id="closeMoreBtn">閉じる</button>
+    <div class="settings-note">設定内容はこの端末のブラウザに保存されます。</div>
+    <input id="importInput" type="file" accept=".csv,.tsv,.txt,.json,text/csv,text/plain,application/json">
+  </div>
+</div>
+
+<script>
+const REGIONS = [
+  "札幌",
+  "函館",
+  "旭川",
+  "室蘭",
+  "苫小牧",
+  "釧路",
+  "知床",
+  "帯広",
+  "十勝",
+  "北見",
+  "青森",
+  "弘前",
+  "八戸",
+  "岩手",
+  "盛岡",
+  "平泉",
+  "宮城",
+  "仙台",
+  "秋田",
+  "山形",
+  "庄内",
+  "福島",
+  "会津",
+  "郡山",
+  "白河",
+  "いわき",
+  "水戸",
+  "土浦",
+  "つくば",
+  "宇都宮",
+  "那須",
+  "日光",
+  "とちぎ",
+  "群馬",
+  "前橋",
+  "高崎",
+  "大宮",
+  "川口",
+  "所沢",
+  "川越",
+  "熊谷",
+  "春日部",
+  "越谷",
+  "千葉",
+  "成田",
+  "習志野",
+  "市川",
+  "船橋",
+  "袖ヶ浦",
+  "市原",
+  "野田",
+  "柏",
+  "松戸",
+  "品川",
+  "世田谷",
+  "練馬",
+  "杉並",
+  "板橋",
+  "足立",
+  "江東",
+  "葛飾",
+  "江戸川",
+  "八王子",
+  "多摩",
+  "横浜",
+  "川崎",
+  "湘南",
+  "相模",
+  "山梨",
+  "富士山",
+  "新潟",
+  "長岡",
+  "上越",
+  "長野",
+  "松本",
+  "諏訪",
+  "安曇野",
+  "南信州",
+  "富山",
+  "石川",
+  "金沢",
+  "福井",
+  "岐阜",
+  "飛騨",
+  "静岡",
+  "浜松",
+  "沼津",
+  "伊豆",
+  "名古屋",
+  "豊橋",
+  "三河",
+  "岡崎",
+  "豊田",
+  "尾張小牧",
+  "一宮",
+  "春日井",
+  "三重",
+  "鈴鹿",
+  "四日市",
+  "伊勢志摩",
+  "滋賀",
+  "京都",
+  "なにわ",
+  "大阪",
+  "和泉",
+  "堺",
+  "奈良",
+  "飛鳥",
+  "和歌山",
+  "神戸",
+  "姫路",
+  "鳥取",
+  "島根",
+  "出雲",
+  "岡山",
+  "倉敷",
+  "広島",
+  "福山",
+  "山口",
+  "下関",
+  "徳島",
+  "香川",
+  "高松",
+  "愛媛",
+  "高知",
+  "福岡",
+  "北九州",
+  "久留米",
+  "筑豊",
+  "佐賀",
+  "長崎",
+  "佐世保",
+  "熊本",
+  "大分",
+  "宮崎",
+  "鹿児島",
+  "奄美",
+  "沖縄"
+];
+const TOTAL = REGIONS.length;
+const STORAGE_COLLECTION = "plate_collection_v1";
+const STORAGE_NUMBERS = "plate_numbers_v1";
+
+
+const REGION_GROUPS = {"北海道": ["札幌", "函館", "旭川", "室蘭", "苫小牧", "釧路", "知床", "帯広", "十勝", "北見"], "東北": ["青森", "弘前", "八戸", "岩手", "盛岡", "平泉", "宮城", "仙台", "秋田", "山形", "庄内", "福島", "会津", "郡山", "白河", "いわき"], "関東": ["水戸", "土浦", "つくば", "宇都宮", "那須", "日光", "とちぎ", "群馬", "前橋", "高崎", "大宮", "川口", "所沢", "川越", "熊谷", "春日部", "越谷", "千葉", "成田", "習志野", "市川", "船橋", "袖ヶ浦", "市原", "野田", "柏", "松戸", "品川", "世田谷", "練馬", "杉並", "板橋", "足立", "江東", "葛飾", "江戸川", "八王子", "多摩", "横浜", "川崎", "湘南", "相模"], "中部": ["山梨", "富士山", "新潟", "長岡", "上越", "長野", "松本", "諏訪", "安曇野", "南信州", "富山", "石川", "金沢", "福井", "岐阜", "飛騨", "静岡", "浜松", "沼津", "伊豆", "名古屋", "豊橋", "三河", "岡崎", "豊田", "尾張小牧", "一宮", "春日井"], "近畿": ["三重", "鈴鹿", "四日市", "伊勢志摩", "滋賀", "京都", "なにわ", "大阪", "和泉", "堺", "奈良", "飛鳥", "和歌山", "神戸", "姫路"], "中国": ["鳥取", "島根", "出雲", "岡山", "倉敷", "広島", "福山", "山口", "下関"], "四国": ["徳島", "香川", "高松", "愛媛", "高知"], "九州・沖縄": ["福岡", "北九州", "久留米", "筑豊", "佐賀", "長崎", "佐世保", "熊本", "大分", "宮崎", "鹿児島", "奄美", "沖縄"]};
+const GOTOUCHI = new Set(["つくば", "一宮", "上越", "下関", "世田谷", "仙台", "伊勢志摩", "伊豆", "会津", "倉敷", "出雲", "前橋", "十勝", "南信州", "四日市", "堺", "奄美", "安曇野", "富士山", "岡崎", "川口", "川越", "市原", "市川", "平泉", "弘前", "成田", "日光", "春日井", "杉並", "松戸", "板橋", "柏", "江戸川", "江東", "白河", "盛岡", "知床", "船橋", "苫小牧", "葛飾", "諏訪", "豊田", "越谷", "那須", "郡山", "金沢", "鈴鹿", "飛鳥", "高崎", "高松"]);
+
+let collection = JSON.parse(localStorage.getItem(STORAGE_COLLECTION) || "[]");
+let numbers = JSON.parse(localStorage.getItem(STORAGE_NUMBERS) || "{}");
+let collectionDates = JSON.parse(localStorage.getItem("plate_collection_dates_v1") || "{}");
+let filter = "all";
+let search = "";
+let sortAsc = true;
+let currentRegion = null;
+
+const STORAGE_THEME = "plate_theme_v1";
+let appTheme = localStorage.getItem(STORAGE_THEME) || "light";
+
+function applyTheme(theme){
+  appTheme = theme === "dark" ? "dark" : "light";
+  document.body.classList.toggle("dark-mode", appTheme === "dark");
+  localStorage.setItem(STORAGE_THEME, appTheme);
+  document.querySelectorAll("#themeSegment button").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.theme === appTheme);
+  });
+}
+
+function save(){
+  localStorage.setItem(STORAGE_COLLECTION, JSON.stringify(collection));
+  localStorage.setItem(STORAGE_NUMBERS, JSON.stringify(numbers));
+  localStorage.setItem("plate_collection_dates_v1", JSON.stringify(collectionDates));
+}
+function todayISO(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function formatDateJP(iso){
+  if(!iso) return "収集日未設定";
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[1]}年${Number(m[2])}月${Number(m[3])}日` : "収集日未設定";
+}
+function randomInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function makePlateNumber(){
+  // 1～4桁をランダム生成。先頭0は禁止。
+  const r = Math.random();
+  let digits;
+  if (r < 0.10) digits = 1;
+  else if (r < 0.30) digits = 2;
+  else if (r < 0.62) digits = 3;
+  else digits = 4;
+  return String(randomInt(digits===1?1:10**(digits-1), 10**digits-1));
+}
+function makeKana(){
+  // 普通車の自家用を基本に、まれにレンタカー・駐留軍人用の文字を混ぜる。
+  // 「へ」は使用しない。国交省資料でも普通車の未使用文字は「お・し・へ・ん」。
+  const standard = [..."さすせそたちつてとなにぬねのはひふほまみむめもやゆらりるろ"];
+  const r = Math.random();
+  if (r < 0.06) return "わ";       // レンタカー
+  if (r < 0.08) return "れ";       // レンタカー
+  if (r < 0.095) return "Y";       // 駐留軍人・軍属私用等
+  return standard[randomInt(0, standard.length-1)];
+}
+function makeClassification(){
+  // 今回のコレクション対象は普通乗用車を想定し、
+  // 分類番号は 300〜399 / 500〜599 からランダムに生成。
+  return Math.random() < 0.5 ? randomInt(300,399) : randomInt(500,599);
+}
+function getPlateNumber(region){
+  if(!numbers[region]){ numbers[region] = makePlateNumber(); save(); }
+  return numbers[region];
+}
+function getPlateKana(region){
+  if(!numbers[region+"_kana"]){ numbers[region+"_kana"] = makeKana(); save(); }
+  return numbers[region+"_kana"];
+}
+function getPlateClass(region){
+  if(!numbers[region+"_class"]){ numbers[region+"_class"] = String(makeClassification()); save(); }
+  return numbers[region+"_class"];
+}
+function formatNumber(raw){
+  const s = String(raw);
+  // すべて5マス固定。右端位置を共通化して桁数による余白変化を防ぐ。
+  if(s.length===4) return s.slice(0,2) + "-" + s.slice(2);
+  if(s.length===3) return "･" + s[0] + " " + s.slice(1);
+  if(s.length===2) return "･･ " + s;
+  return "･･ ･" + s;
+}
+function formatNumberHtml(raw){
+  const s = formatNumber(raw);
+  return [...s].map(ch =>
+    `<span class="num-char">${ch === " " ? "&nbsp;" : escapeHtml(ch)}</span>`
+  ).join("");
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function isCollected(region){ return collection.includes(region); }
+
+function render(){
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  let totalVisible = 0;
+
+  const groupEntries = Object.entries(REGION_GROUPS);
+  if(!sortAsc) groupEntries.reverse();
+
+  groupEntries.forEach(([groupName, groupRegions])=>{
+    let list = groupRegions.filter(r=>{
+      const matches = r.toLowerCase().includes(search.toLowerCase());
+      if(!matches) return false;
+      if(filter==="collected") return isCollected(r);
+      if(filter==="uncollected") return !isCollected(r);
+      return true;
+    });
+
+    if(!list.length) return;
+    if(!sortAsc) list = [...list].reverse();
+
+    const groupHeader = document.createElement("div");
+    const groupCollected = groupRegions.filter(r=>isCollected(r)).length;
+    groupHeader.className = "region-group-header";
+    groupHeader.innerHTML = `
+      <span>${escapeHtml(groupName)}</span>
+      <span class="region-group-count">${groupCollected} / ${groupRegions.length}</span>
+    `;
+    grid.appendChild(groupHeader);
+
+    list.forEach(region=>{
+      totalVisible++;
+      const collected = isCollected(region);
+      const gotouchi = GOTOUCHI.has(region);
+      const card = document.createElement("div");
+      card.className = "card " + (collected ? "collected" : "uncollected");
+      card.innerHTML = `
+        <div class="region-line">
+          <div class="region">${escapeHtml(region)}</div>
+          ${gotouchi ? '<span class="gotouchi">(ご当地)</span>' : ""}
+        </div>
+        <div class="plate">
+          <div class="plate-top">${escapeHtml(region)}　${escapeHtml(getPlateClass(region))}</div>
+          <div class="bottom-line">
+            <div class="kana">${escapeHtml(getPlateKana(region))}</div>
+            <div class="num">${formatNumberHtml(getPlateNumber(region))}</div>
+          </div>
+        </div>
+        <div class="status"><span class="dot">${collected?"✓":""}</span>${collected?"収集済み":"未分類"}</div>
+        ${collected ? `<div class="detail-date">${escapeHtml(formatDateJP(collectionDates[region]))}</div>` : ""}
+      `;
+      card.addEventListener("click",()=>openSheet(region));
+      grid.appendChild(card);
+    });
+  });
+
+  if(!totalVisible){
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><strong>見つかりませんでした</strong><span>検索条件を変えてみてください。</span></div>';
+  }
+
+  const c = collection.length;
+  document.getElementById("count").textContent = `${c} / ${TOTAL}`;
+  document.getElementById("progressBar").style.width = `${(c/TOTAL*100).toFixed(2)}%`;
+  document.title = `ナンバープレートコレクション (${c}/${TOTAL})`;
+}
+
+function openSheet(region){
+  currentRegion = region;
+  const collected = isCollected(region);
+  document.getElementById("largePlate").innerHTML = `
+    <div class="plate">
+      <div class="plate-top">${escapeHtml(region)}　${escapeHtml(getPlateClass(region))}</div>
+      <div class="bottom-line">
+        <div class="kana">${escapeHtml(getPlateKana(region))}</div>
+        <div class="num">${formatNumberHtml(getPlateNumber(region))}</div>
+      </div>
+    </div>`;
+  document.getElementById("sheetTitle").innerHTML = `${escapeHtml(region)}${GOTOUCHI.has(region) ? ' <span class="gotouchi">(ご当地)</span>' : ''}`;
+  document.getElementById("sheetState").textContent = collected ? "収集済み" : "未分類";
+  document.getElementById("collectionDate").value = collectionDates[region] || "";
+  document.getElementById("dateSavedMessage").textContent = "";
+  document.getElementById("saveDateBtn").style.display = collected ? "block" : "none";
+  document.getElementById("dateRow").style.display = collected ? "block" : "none";
+  document.getElementById("collectBtn").textContent = collected ? "コレクションから外す" : "コレクションする";
+  document.getElementById("overlay").classList.add("show");
+}
+function closeSheet(){ document.getElementById("overlay").classList.remove("show"); currentRegion=null; }
+
+document.querySelectorAll(".segment button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".segment button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    filter = btn.dataset.filter;
+    render();
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+});
+document.getElementById("searchBtn").addEventListener("click",()=>{
+  const row = document.getElementById("searchRow");
+  row.classList.toggle("open");
+  if(row.classList.contains("open")) document.getElementById("searchInput").focus();
+});
+document.getElementById("searchInput").addEventListener("input",e=>{ search=e.target.value; render(); });
+document.getElementById("sortBtn").addEventListener("click",()=>{
+  // 今回の基本仕様は北海道→沖縄の地域順。もう一度押すと逆順。
+  sortAsc = !sortAsc; document.getElementById("sortBtn").textContent = sortAsc ? "地域順 ↕" : "逆順 ↕"; render();
+});
+document.getElementById("closeBtn").addEventListener("click",closeSheet);
+document.getElementById("overlay").addEventListener("click",e=>{ if(e.target===e.currentTarget) closeSheet(); });
+document.getElementById("collectBtn").addEventListener("click",()=>{
+  if(!currentRegion) return;
+  const region = currentRegion;
+
+  if(isCollected(region)) {
+    // 収集済みから解除した場合は日付も削除。
+    collection = collection.filter(r=>r!==region);
+    delete collectionDates[region];
+    save();
+    closeSheet();
+    render();
+    return;
+  }
+
+  // 新しく収集した場合は当日を記録し、詳細画面は閉じてホームへ戻る。
+  collection.push(region);
+  collectionDates[region] = todayISO();
+  save();
+  closeSheet();
+
+  // 新規収集時は「すべて」の一覧に戻す。
+  filter = "all";
+  document.querySelectorAll(".segment button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.filter==="all");
+  });
+
+  render();
+  window.scrollTo({top:0,behavior:"smooth"});
+});
+function saveCollectionDate(){
+  if(!currentRegion || !isCollected(currentRegion)) return;
+  const region = currentRegion;
+  const input = document.getElementById("collectionDate");
+  const button = document.getElementById("saveDateBtn");
+  const message = document.getElementById("dateSavedMessage");
+  const v = input.value;
+
+  if(v){
+    collectionDates[region] = v;
+  }else{
+    delete collectionDates[region];
+  }
+
+  save();
+  render();
+
+  // 現在開いている詳細画面は閉じず、保存済み表示だけ更新。
+  document.getElementById("sheetState").textContent = "収集済み";
+  message.textContent = v ? `収集日を ${formatDateJP(v)} に変更しました ✓` : "収集日を未設定にしました ✓";
+  button.textContent = "保存しました ✓";
+  setTimeout(()=>{
+    if(message) message.textContent = "";
+    if(button) button.textContent = "収集日を保存";
+  }, 1800);
+}
+
+const moreOverlay = document.getElementById("moreOverlay");
+document.getElementById("settingsBtn").addEventListener("click",()=>{
+  moreOverlay.classList.add("show");
+  applyTheme(appTheme);
+});
+
+document.getElementById("closeMoreBtn").addEventListener("click",()=>{
+  moreOverlay.classList.remove("show");
+});
+moreOverlay.addEventListener("click",e=>{
+  if(e.target===e.currentTarget){
+    moreOverlay.classList.remove("show");
+    }
+});
+
+document.querySelectorAll("#themeSegment button").forEach(btn=>{
+  btn.addEventListener("click",()=>applyTheme(btn.dataset.theme));
+});
+
+document.getElementById("saveDateBtn").addEventListener("click", saveCollectionDate);
+document.getElementById("saveDateBtn").addEventListener("touchend", (e)=>{
+  e.preventDefault();
+  saveCollectionDate();
+});
+document.getElementById("clearDateBtn").addEventListener("click",()=>{
+  document.getElementById("collectionDate").value = "";
+});
+document.getElementById("todayDateBtn").addEventListener("click",()=>{
+  document.getElementById("collectionDate").value = todayISO();
+});
+
+
+
+applyTheme(appTheme);
+render();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("./sw.js").catch(function(){});
+  });
+}
+</script>
+
+</body>
+</html>
