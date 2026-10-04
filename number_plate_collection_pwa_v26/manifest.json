@@ -1,6 +1,6 @@
 {
   "name": "ナンバープレートコレクション",
-  "short_name": "ナンコレ",
+  "short_name": "プレート収集",
   "description": "日本のナンバープレート地域名を集めるコレクションWebアプリ",
   "lang": "ja",
   "start_url": "./",
