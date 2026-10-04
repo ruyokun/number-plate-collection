@@ -1,4 +1,4 @@
-const CACHE_NAME = "number-plate-collection-v29";
+const CACHE_NAME = "number-plate-collection-v30";
 const APP_SHELL = [
   "./",
   "./index.html",
